@@ -653,13 +653,18 @@ class ZkUtils(val zkClient: ZkClient,
     val ret = new mutable.HashMap[TopicAndPartition, Seq[Int]]
     topics.foreach { topic =>
       readDataMaybeNull(getTopicPath(topic))._1.foreach { jsonPartitionMap =>
-        Json.parseFull(jsonPartitionMap).foreach { js =>
-          js.asJsonObject.get("partitions").foreach { partitionsJs =>
-            partitionsJs.asJsonObject.iterator.foreach { case (partition, replicas) =>
-              ret.put(TopicAndPartition(topic, partition.toInt), replicas.to[Seq[Int]])
-              debug("Replicas assigned to topic [%s], partition [%s] are [%s]".format(topic, partition, replicas))
+        try{
+          Json.parseFull(jsonPartitionMap).foreach { js =>
+            js.asJsonObject.get("partitions").foreach { partitionsJs =>
+              partitionsJs.asJsonObject.iterator.foreach { case (partition, replicas) =>
+                ret.put(TopicAndPartition(topic, partition.toInt), replicas.to[Seq[Int]])
+                debug("Replicas assigned to topic [%s], partition [%s] are [%s]".format(topic, partition, replicas))
+              }
             }
           }
+        } catch {
+          // if topic node exists but the data not json (e.g. null), skip this topic
+          case _ => error("Topic [%s] data error, skip it".format(jsonPartitionMap))
         }
       }
     }

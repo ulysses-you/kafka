@@ -17,7 +17,7 @@
 
 package kafka.server.metadata
 
-import java.util.{OptionalInt, Properties}
+import java.util.Properties
 import kafka.coordinator.transaction.TransactionCoordinator
 import kafka.log.LogManager
 import kafka.server.{KafkaConfig, ReplicaManager, RequestLocal}
@@ -25,7 +25,7 @@ import kafka.utils.Logging
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.errors.TimeoutException
 import org.apache.kafka.common.internals.Topic
-import org.apache.kafka.coordinator.group.GroupCoordinator
+import org.apache.kafka.coordinator.group.{CoordinatorEpoch, GroupCoordinator}
 import org.apache.kafka.image.loader.LoaderManifest
 import org.apache.kafka.image.publisher.MetadataPublisher
 import org.apache.kafka.image.{MetadataDelta, MetadataImage, TopicDelta}
@@ -142,7 +142,7 @@ class BrokerMetadataPublisher(
             delta,
             Topic.GROUP_METADATA_TOPIC_NAME,
             groupCoordinator.onElection,
-            (partitionIndex, leaderEpochOpt) => groupCoordinator.onResignation(partitionIndex, toOptionalInt(leaderEpochOpt))
+            (partitionIndex, leaderEpochOpt) => groupCoordinator.onResignation(partitionIndex, toCoordinatorEpoch(leaderEpochOpt))
           )
         } catch {
           case t: Throwable => metadataPublishingFaultHandler.handleFault("Error updating group " +
@@ -212,10 +212,10 @@ class BrokerMetadataPublisher(
     }
   }
 
-  private def toOptionalInt(option: Option[Int]): OptionalInt = {
+  private def toCoordinatorEpoch(option: Option[Int]): CoordinatorEpoch = {
     option match {
-      case Some(leaderEpoch) => OptionalInt.of(leaderEpoch)
-      case None => OptionalInt.empty
+      case Some(leaderEpoch) => CoordinatorEpoch.of(leaderEpoch)
+      case None => CoordinatorEpoch.empty
     }
   }
 

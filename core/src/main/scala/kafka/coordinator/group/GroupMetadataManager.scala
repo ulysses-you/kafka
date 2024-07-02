@@ -20,7 +20,7 @@ package kafka.coordinator.group
 import java.io.PrintStream
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
-import java.util.{Optional, OptionalInt}
+import java.util.Optional
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.ConcurrentHashMap
@@ -43,7 +43,7 @@ import org.apache.kafka.common.requests.ProduceResponse.PartitionResponse
 import org.apache.kafka.common.requests.{OffsetCommitRequest, OffsetFetchResponse}
 import org.apache.kafka.common.utils.{Time, Utils}
 import org.apache.kafka.common.{MessageFormatter, TopicIdPartition, TopicPartition}
-import org.apache.kafka.coordinator.group.OffsetConfig
+import org.apache.kafka.coordinator.group.{CoordinatorEpoch, OffsetConfig}
 import org.apache.kafka.coordinator.group.generated.{GroupMetadataValue, OffsetCommitKey, OffsetCommitValue, GroupMetadataKey => GroupMetadataKeyData}
 import org.apache.kafka.server.common.MetadataVersion
 import org.apache.kafka.server.common.MetadataVersion.{IBP_0_10_1_IV0, IBP_2_1_IV0, IBP_2_1_IV1, IBP_2_3_IV0}
@@ -560,7 +560,7 @@ class GroupMetadataManager(brokerId: Int,
     onGroupLoaded: GroupMetadata => Unit,
     startTimeMs: java.lang.Long
   ): Unit = {
-    if (!maybeUpdateCoordinatorEpoch(topicPartition.partition, OptionalInt.of(coordinatorEpoch))) {
+    if (!maybeUpdateCoordinatorEpoch(topicPartition.partition, CoordinatorEpoch.of(coordinatorEpoch))) {
       info(s"Not loading offsets and group metadata for $topicPartition " +
         s"in epoch $coordinatorEpoch since current epoch is ${epochForPartitionId.get(topicPartition.partition)}")
     } else if (!addLoadingPartition(topicPartition.partition)) {
@@ -777,7 +777,7 @@ class GroupMetadataManager(brokerId: Int,
    * @param offsetsPartition Groups belonging to this partition of the offsets topic will be deleted from the cache.
    */
   def removeGroupsForPartition(offsetsPartition: Int,
-                               coordinatorEpoch: OptionalInt,
+                               coordinatorEpoch: CoordinatorEpoch,
                                onGroupUnloaded: GroupMetadata => Unit): Unit = {
     val topicPartition = new TopicPartition(Topic.GROUP_METADATA_TOPIC_NAME, offsetsPartition)
     info(s"Scheduling unloading of offsets and group metadata from $topicPartition")
@@ -785,7 +785,7 @@ class GroupMetadataManager(brokerId: Int,
   }
 
   private [group] def removeGroupsAndOffsets(topicPartition: TopicPartition,
-                                             coordinatorEpoch: OptionalInt,
+                                             coordinatorEpoch: CoordinatorEpoch,
                                              onGroupUnloaded: GroupMetadata => Unit): Unit = {
     val offsetsPartition = topicPartition.partition
     if (maybeUpdateCoordinatorEpoch(offsetsPartition, coordinatorEpoch)) {
@@ -824,19 +824,19 @@ class GroupMetadataManager(brokerId: Int,
    */
   private def maybeUpdateCoordinatorEpoch(
     partitionId: Int,
-    epochOpt: OptionalInt
+    epochOpt: CoordinatorEpoch
   ): Boolean = {
     val updatedEpoch = epochForPartitionId.compute(partitionId, (_, currentEpoch) => {
       if (currentEpoch == null) {
-        if (epochOpt.isPresent) epochOpt.getAsInt
+        if (!epochOpt.isDeleted) epochOpt.epoch()
         else null
       } else {
-        if (epochOpt.isPresent && epochOpt.getAsInt > currentEpoch) epochOpt.getAsInt
+        if (!epochOpt.isDeleted && epochOpt.epoch() > currentEpoch) epochOpt.epoch()
         else currentEpoch
       }
     })
-    if (epochOpt.isPresent) {
-      epochOpt.getAsInt == updatedEpoch
+    if (!epochOpt.isDeleted) {
+      epochOpt.epoch() == updatedEpoch
     } else {
       true
     }

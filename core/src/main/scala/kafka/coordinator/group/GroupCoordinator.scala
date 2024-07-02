@@ -16,7 +16,7 @@
  */
 package kafka.coordinator.group
 
-import java.util.{OptionalInt, Properties}
+import java.util.Properties
 import java.util.concurrent.atomic.AtomicBoolean
 import kafka.common.OffsetAndMetadata
 import kafka.server._
@@ -32,7 +32,7 @@ import org.apache.kafka.common.protocol.{ApiKeys, Errors}
 import org.apache.kafka.common.record.RecordBatch
 import org.apache.kafka.common.requests._
 import org.apache.kafka.common.utils.Time
-import org.apache.kafka.coordinator.group.{Group, OffsetConfig}
+import org.apache.kafka.coordinator.group.{CoordinatorEpoch, Group, OffsetConfig}
 import org.apache.kafka.server.record.BrokerCompressionType
 import org.apache.kafka.storage.internals.log.VerificationGuard
 
@@ -1238,7 +1238,7 @@ private[group] class GroupCoordinator(
    *
    * @param offsetTopicPartitionId The partition we are no longer leading
    */
-  def onResignation(offsetTopicPartitionId: Int, coordinatorEpoch: OptionalInt): Unit = {
+  def onResignation(offsetTopicPartitionId: Int, coordinatorEpoch: CoordinatorEpoch): Unit = {
     info(s"Resigned as the group coordinator for partition $offsetTopicPartitionId in epoch $coordinatorEpoch")
     groupManager.removeGroupsForPartition(offsetTopicPartitionId, coordinatorEpoch, onGroupUnloaded)
   }

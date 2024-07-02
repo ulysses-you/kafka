@@ -26,12 +26,13 @@ import org.apache.kafka.common.protocol.{ApiKeys, Errors}
 import org.apache.kafka.common.record.RecordBatch
 import org.apache.kafka.common.requests.{OffsetCommitRequest, RequestContext, TransactionResult}
 import org.apache.kafka.common.utils.{BufferSupplier, Time}
+import org.apache.kafka.coordinator.group.CoordinatorEpoch
 import org.apache.kafka.image.{MetadataDelta, MetadataImage}
 import org.apache.kafka.server.util.FutureUtils
 
 import java.time.Duration
 import java.util
-import java.util.{Optional, OptionalInt, Properties}
+import java.util.{Optional, Properties}
 import java.util.concurrent.CompletableFuture
 import java.util.function.IntSupplier
 import scala.collection.{immutable, mutable}
@@ -595,7 +596,7 @@ private[group] class GroupCoordinatorAdapter(
 
   override def onResignation(
     groupMetadataPartitionIndex: Int,
-    groupMetadataPartitionLeaderEpoch: OptionalInt
+    groupMetadataPartitionLeaderEpoch: CoordinatorEpoch
   ): Unit = {
     coordinator.onResignation(groupMetadataPartitionIndex, groupMetadataPartitionLeaderEpoch)
   }

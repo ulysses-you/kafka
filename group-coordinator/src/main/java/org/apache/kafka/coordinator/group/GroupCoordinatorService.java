@@ -80,7 +80,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.OptionalInt;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -1002,12 +1001,12 @@ public class GroupCoordinatorService implements GroupCoordinator {
     }
 
     /**
-     * See {@link GroupCoordinator#onResignation(int, OptionalInt)}.
+     * See {@link GroupCoordinator#onResignation(int, CoordinatorEpoch)}.
      */
     @Override
     public void onResignation(
         int groupMetadataPartitionIndex,
-        OptionalInt groupMetadataPartitionLeaderEpoch
+        CoordinatorEpoch groupMetadataPartitionLeaderEpoch
     ) {
         throwIfNotActive();
         runtime.scheduleUnloadOperation(

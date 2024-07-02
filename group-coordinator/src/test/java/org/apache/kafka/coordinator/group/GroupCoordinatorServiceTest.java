@@ -84,7 +84,6 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.OptionalInt;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -314,14 +313,14 @@ public class GroupCoordinatorServiceTest {
         );
 
         assertThrows(CoordinatorNotAvailableException.class,
-            () -> service.onResignation(5, OptionalInt.of(10)));
+            () -> service.onResignation(5, CoordinatorEpoch.of(10)));
 
         service.startup(() -> 1);
-        service.onResignation(5, OptionalInt.of(10));
+        service.onResignation(5, CoordinatorEpoch.of(10));
 
         verify(runtime, times(1)).scheduleUnloadOperation(
             new TopicPartition("__consumer_offsets", 5),
-            OptionalInt.of(10)
+            CoordinatorEpoch.of(10)
         );
     }
 
@@ -336,11 +335,11 @@ public class GroupCoordinatorServiceTest {
         );
 
         service.startup(() -> 1);
-        service.onResignation(5, OptionalInt.empty());
+        service.onResignation(5, CoordinatorEpoch.empty());
 
         verify(runtime, times(1)).scheduleUnloadOperation(
             new TopicPartition("__consumer_offsets", 5),
-            OptionalInt.empty()
+            CoordinatorEpoch.empty()
         );
     }
 

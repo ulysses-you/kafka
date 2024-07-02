@@ -67,7 +67,7 @@ import org.apache.kafka.common.security.auth.{KafkaPrincipal, SecurityProtocol}
 import org.apache.kafka.common.security.token.delegation.{DelegationToken, TokenInformation}
 import org.apache.kafka.common.utils.{ProducerIdAndEpoch, Time}
 import org.apache.kafka.common.{Node, TopicIdPartition, TopicPartition, Uuid}
-import org.apache.kafka.coordinator.group.{Group, GroupCoordinator}
+import org.apache.kafka.coordinator.group.{CoordinatorEpoch, Group, GroupCoordinator}
 import org.apache.kafka.server.ClientMetricsManager
 import org.apache.kafka.server.authorizer._
 import org.apache.kafka.server.common.{GroupVersion, MetadataVersion}
@@ -81,7 +81,7 @@ import java.time.Duration
 import java.util
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{CompletableFuture, ConcurrentHashMap}
-import java.util.{Collections, Optional, OptionalInt}
+import java.util.{Collections, Optional}
 import scala.annotation.nowarn
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.{Map, Seq, Set, mutable}
@@ -339,9 +339,9 @@ class KafkaApis(val requestChannel: RequestChannel,
           if (topicPartition.topic == GROUP_METADATA_TOPIC_NAME
               && partitionState.deletePartition) {
             val leaderEpoch = if (partitionState.leaderEpoch >= 0)
-              OptionalInt.of(partitionState.leaderEpoch)
+              CoordinatorEpoch.of(partitionState.leaderEpoch())
             else
-              OptionalInt.empty
+              CoordinatorEpoch.empty()
             groupCoordinator.onResignation(topicPartition.partition, leaderEpoch)
           } else if (topicPartition.topic == TRANSACTION_STATE_TOPIC_NAME
                      && partitionState.deletePartition) {

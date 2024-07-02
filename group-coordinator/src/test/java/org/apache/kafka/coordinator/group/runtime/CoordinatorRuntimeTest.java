@@ -37,6 +37,7 @@ import org.apache.kafka.common.record.TimestampType;
 import org.apache.kafka.common.requests.TransactionResult;
 import org.apache.kafka.common.utils.LogContext;
 import org.apache.kafka.common.utils.Time;
+import org.apache.kafka.coordinator.group.CoordinatorEpoch;
 import org.apache.kafka.coordinator.group.metrics.CoordinatorMetrics;
 import org.apache.kafka.coordinator.group.metrics.GroupCoordinatorMetrics;
 import org.apache.kafka.coordinator.group.metrics.GroupCoordinatorRuntimeMetrics;
@@ -67,7 +68,6 @@ import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import java.util.OptionalInt;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -892,7 +892,7 @@ public class CoordinatorRuntimeTest {
         assertEquals(10, ctx.epoch);
 
         // Schedule the unloading.
-        runtime.scheduleUnloadOperation(TP, OptionalInt.of(ctx.epoch + 1));
+        runtime.scheduleUnloadOperation(TP, CoordinatorEpoch.of(ctx.epoch + 1));
         assertEquals(CLOSED, ctx.state);
 
         // Verify that onUnloaded is called.
@@ -946,7 +946,7 @@ public class CoordinatorRuntimeTest {
         assertEquals(10, ctx.epoch);
 
         // Schedule the unloading.
-        runtime.scheduleUnloadOperation(TP, OptionalInt.empty());
+        runtime.scheduleUnloadOperation(TP, CoordinatorEpoch.empty());
         assertEquals(CLOSED, ctx.state);
 
         // Verify that onUnloaded is called.
@@ -996,7 +996,7 @@ public class CoordinatorRuntimeTest {
         // is asked to unload its state. The unload event is skipped in this case.
 
         // Schedule the unloading.
-        runtime.scheduleUnloadOperation(TP, OptionalInt.of(11));
+        runtime.scheduleUnloadOperation(TP, CoordinatorEpoch.of(11));
 
         // Verify that onUnloaded is not called.
         verify(coordinator, times(0)).onUnloaded();
@@ -1045,7 +1045,7 @@ public class CoordinatorRuntimeTest {
 
         // Unloading with a previous epoch is a no-op. The coordinator stays
         // in active with the correct epoch.
-        runtime.scheduleUnloadOperation(TP, OptionalInt.of(0));
+        runtime.scheduleUnloadOperation(TP, CoordinatorEpoch.of(0));
         assertEquals(ACTIVE, ctx.state);
         assertEquals(10, ctx.epoch);
     }

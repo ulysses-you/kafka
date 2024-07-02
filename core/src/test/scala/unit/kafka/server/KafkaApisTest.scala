@@ -73,7 +73,7 @@ import org.apache.kafka.common.resource.{PatternType, Resource, ResourcePattern,
 import org.apache.kafka.common.security.auth.{KafkaPrincipal, KafkaPrincipalSerde, SecurityProtocol}
 import org.apache.kafka.common.utils.annotation.ApiKeyVersionsSource
 import org.apache.kafka.common.utils.{ProducerIdAndEpoch, SecurityUtils, Utils}
-import org.apache.kafka.coordinator.group.{GroupCoordinator, GroupCoordinatorConfig}
+import org.apache.kafka.coordinator.group.{CoordinatorEpoch, GroupCoordinator, GroupCoordinatorConfig}
 import org.apache.kafka.coordinator.transaction.TransactionLogConfigs
 import org.apache.kafka.raft.QuorumConfig
 import org.apache.kafka.security.authorizer.AclEntry
@@ -3036,10 +3036,10 @@ class KafkaApisTest extends Logging {
     if (deletePartition) {
       if (leaderEpoch >= 0) {
         verify(txnCoordinator).onResignation(txnStatePartition.partition, Some(leaderEpoch))
-        verify(groupCoordinator).onResignation(groupMetadataPartition.partition, OptionalInt.of(leaderEpoch))
+        verify(groupCoordinator).onResignation(groupMetadataPartition.partition, CoordinatorEpoch.of(leaderEpoch))
       } else {
         verify(txnCoordinator).onResignation(txnStatePartition.partition, None)
-        verify(groupCoordinator).onResignation(groupMetadataPartition.partition, OptionalInt.empty)
+        verify(groupCoordinator).onResignation(groupMetadataPartition.partition, CoordinatorEpoch.empty)
       }
     }
   }

@@ -37,6 +37,7 @@ import org.apache.kafka.common.utils.BufferSupplier;
 import org.apache.kafka.common.utils.LogContext;
 import org.apache.kafka.common.utils.Time;
 import org.apache.kafka.common.utils.Utils;
+import org.apache.kafka.coordinator.group.CoordinatorEpoch;
 import org.apache.kafka.coordinator.group.metrics.CoordinatorMetrics;
 import org.apache.kafka.coordinator.group.metrics.CoordinatorRuntimeMetrics;
 import org.apache.kafka.deferred.DeferredEvent;
@@ -59,7 +60,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionException;
@@ -2248,7 +2248,7 @@ public class CoordinatorRuntime<S extends CoordinatorShard<U>, U> implements Aut
      */
     public void scheduleUnloadOperation(
         TopicPartition tp,
-        OptionalInt partitionEpoch
+        CoordinatorEpoch partitionEpoch
     ) {
         throwIfNotRunning();
         log.info("Scheduling unloading of metadata for {} with epoch {}", tp, partitionEpoch);
@@ -2258,7 +2258,7 @@ public class CoordinatorRuntime<S extends CoordinatorShard<U>, U> implements Aut
             if (context != null) {
                 context.lock.lock();
                 try {
-                    if (!partitionEpoch.isPresent() || context.epoch < partitionEpoch.getAsInt()) {
+                    if (partitionEpoch.isDeleted() || context.epoch < partitionEpoch.epoch()) {
                         log.info("Started unloading metadata for {} with epoch {}.", tp, partitionEpoch);
                         context.transitionTo(CoordinatorState.CLOSED);
                         coordinators.remove(tp, context);

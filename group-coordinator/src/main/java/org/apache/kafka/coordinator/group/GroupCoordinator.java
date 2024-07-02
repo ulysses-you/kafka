@@ -48,7 +48,6 @@ import org.apache.kafka.image.MetadataImage;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.OptionalInt;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -349,7 +348,7 @@ public interface GroupCoordinator {
      */
     void onResignation(
         int groupMetadataPartitionIndex,
-        OptionalInt groupMetadataPartitionLeaderEpoch
+        CoordinatorEpoch groupMetadataPartitionLeaderEpoch
     );
 
     /**
